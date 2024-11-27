@@ -396,10 +396,10 @@ begin
 			when "110" =>
 				if is_sprite = '1' then
 						case attr_sp(7 downto 6) is
-						when "00" => tile_graph_rom_addr <= attr_sp_bg(4) & attr_sp_bg(5) & attr_sp(5 downto 0) & (y_line_shift(3) & x_tile(0) & y_line_shift(2 downto 0)) xor "00000"; --TBA
-						when "01" => tile_graph_rom_addr <= attr_sp_bg(4) & attr_sp_bg(5) & attr_sp(5 downto 0) & (y_line_shift(3) & x_tile(0) & y_line_shift(2 downto 0)) xor "01000"; --TBA
-						when "10" => tile_graph_rom_addr <= attr_sp_bg(4) & attr_sp_bg(5) & attr_sp(5 downto 0) & (y_line_shift(3) & x_tile(0) & y_line_shift(2 downto 0)) xor "10111"; --TBA
-						when "11" => tile_graph_rom_addr <= attr_sp_bg(4) & attr_sp_bg(5) & attr_sp(5 downto 0) & (y_line_shift(3) & x_tile(0) & y_line_shift(2 downto 0)) xor "11111"; --TBA
+						when "00" => tile_graph_rom_addr <= attr_sp_bg(4) & attr_sp_bg(5) & attr_sp(5 downto 0) & (y_line_shift(3) & x_tile(0) & y_line_shift(2 downto 0)) xor "0000000000000"; --TBA
+						when "01" => tile_graph_rom_addr <= attr_sp_bg(4) & attr_sp_bg(5) & attr_sp(5 downto 0) & (y_line_shift(3) & x_tile(0) & y_line_shift(2 downto 0)) xor "0000000001000"; --TBA
+						when "10" => tile_graph_rom_addr <= attr_sp_bg(4) & attr_sp_bg(5) & attr_sp(5 downto 0) & (y_line_shift(3) & x_tile(0) & y_line_shift(2 downto 0)) xor "0000000010111"; --TBA
+						when "11" => tile_graph_rom_addr <= attr_sp_bg(4) & attr_sp_bg(5) & attr_sp(5 downto 0) & (y_line_shift(3) & x_tile(0) & y_line_shift(2 downto 0)) xor "0000000011111"; --TBA
 						end case;
 				else
 					tile_graph_rom_addr <= attr_sp_bg(4) & attr_sp_bg(5) & bg_tile_code & y_line_shift(2 downto 0);
