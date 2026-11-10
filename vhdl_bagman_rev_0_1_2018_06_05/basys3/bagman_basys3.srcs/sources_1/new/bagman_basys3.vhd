@@ -16,8 +16,9 @@
 --
 -- Main features :
 --  PS2 keyboard input @onboard USB HID (PS/2 emulation)
---  Joystick input     @JXADC pins 1/2/3/4/7 = right/left/down/up/jump (active low)
---  Audio pwm output   @PmodAMP2 on JA pins 1/2/4; sw15 = audio disable, sw14 = gain
+--  Joystick input     @JA pins 1/2/3/4/7 = right/left/down/up/jump (active low)
+--  Audio pwm output   @PmodAMP2 on JXADC pins 1/2/4; sw15 = audio disable
+--  Scanlines          sw14 = alternate lines at 50% (31kHz only)
 --
 -- Uses 1 MMCM (clk_wiz_0) for 12.288MHz generation from 100MHz
 --
@@ -67,7 +68,7 @@ port(
   vga_hs    : out std_logic;
   vga_vs    : out std_logic;
 
-  JXADC            : in  std_logic_vector(4 downto 0);
+  joy_n            : in  std_logic_vector(4 downto 0);
   ps2_clk          : in  std_logic;
   ps2_dat          : in  std_logic;
   O_PMODAMP2_AIN   : out std_logic;
@@ -90,6 +91,8 @@ architecture struct of bagman_basys3 is
   signal vsync     : std_logic;
   signal blankn    : std_logic;
   signal tv15Khz_mode : std_logic;
+  signal vga_r_i, vga_g_i, vga_b_i : std_logic_vector(3 downto 0);
+  signal hsync_d, vsync_d, scanline, dim : std_logic;
 
   signal audio           : std_logic_vector(12 downto 0);
   signal pwm_accumulator : std_logic_vector(12 downto 0);
@@ -97,11 +100,11 @@ architecture struct of bagman_basys3 is
   -- 2-FF synchronizers for the asynchronous inputs
   signal ps2_clk_meta, ps2_clk_s : std_logic := '1';
   signal ps2_dat_meta, ps2_dat_s : std_logic := '1';
-  signal jxadc_meta, jxadc_s     : std_logic_vector(4 downto 0) := (others => '1');
+  signal stick_meta, stick_s     : std_logic_vector(4 downto 0) := (others => '1');
   signal btn_meta, btn_s         : std_logic_vector(3 downto 0) := (others => '0'); -- U, D, L, R
   attribute ASYNC_REG : string;
   attribute ASYNC_REG of ps2_clk_meta, ps2_clk_s, ps2_dat_meta, ps2_dat_s : signal is "TRUE";
-  attribute ASYNC_REG of jxadc_meta, jxadc_s, btn_meta, btn_s : signal is "TRUE";
+  attribute ASYNC_REG of stick_meta, stick_s, btn_meta, btn_s : signal is "TRUE";
 
   signal kbd_intr      : std_logic;
   signal kbd_scancode  : std_logic_vector(7 downto 0);
@@ -130,7 +133,7 @@ begin
     if rising_edge(clock_12) then
       ps2_clk_meta <= ps2_clk;      ps2_clk_s <= ps2_clk_meta;
       ps2_dat_meta <= ps2_dat;      ps2_dat_s <= ps2_dat_meta;
-      jxadc_meta   <= JXADC;        jxadc_s   <= jxadc_meta;
+      stick_meta   <= joy_n;        stick_s   <= stick_meta;
       btn_meta     <= btnU & btnD & btnL & btnR;
       btn_s        <= btn_meta;
     end if;
@@ -171,9 +174,9 @@ begin
   blankn <= '1'; -- TBA
 
   -- adapt video to 4bits/color only
-  vga_r <= r&'0'  when blankn = '1' else "0000";
-  vga_g <= g&'0'  when blankn = '1' else "0000";
-  vga_b <= b&"00" when blankn = '1' else "0000";
+  vga_r_i <= r&'0'  when blankn = '1' else "0000";
+  vga_g_i <= g&'0'  when blankn = '1' else "0000";
+  vga_b_i <= b&"00" when blankn = '1' else "0000";
 
   -- synchro composite/ synchro horizontale
   --vga_hs <= csync;
@@ -181,6 +184,25 @@ begin
   -- commutation rapide / synchro verticale
   --vga_vs <= '1';
   vga_vs <= '1'   when tv15Khz_mode = '1' else vsync;
+
+  -- scanlines: sw14 up = alternate lines at 50% in 31 kHz mode
+  process (clock_12)
+  begin
+    if rising_edge(clock_12) then
+      hsync_d <= hsync;
+      vsync_d <= vsync;
+      if vsync /= vsync_d then
+        scanline <= '0';
+      elsif hsync = '1' and hsync_d = '0' then
+        scanline <= not scanline;
+      end if;
+    end if;
+  end process;
+
+  dim   <= sw(14) and scanline and not tv15Khz_mode;
+  vga_r <= '0' & vga_r_i(3 downto 1) when dim = '1' else vga_r_i;
+  vga_g <= '0' & vga_g_i(3 downto 1) when dim = '1' else vga_g_i;
+  vga_b <= '0' & vga_b_i(3 downto 1) when dim = '1' else vga_b_i;
 
   -- get scancode from keyboard
 
@@ -217,13 +239,13 @@ begin
     end if;
   end process;
 
-  -- merge keyboard, JXADC joystick (active low) and buttons; player 2 mirrors
+  -- merge keyboard, JA joystick (active low) and buttons; player 2 mirrors
   -- player 1 as on the DE10-lite top
-  joyHBCPPFRLDU(0) <= kbd_joy(0) or not jxadc_s(3);           -- up    (JXADC4)
-  joyHBCPPFRLDU(1) <= kbd_joy(1) or not jxadc_s(2);           -- down  (JXADC3)
-  joyHBCPPFRLDU(2) <= kbd_joy(2) or not jxadc_s(1);           -- left  (JXADC2)
-  joyHBCPPFRLDU(3) <= kbd_joy(3) or not jxadc_s(0);           -- right (JXADC1)
-  joyHBCPPFRLDU(4) <= kbd_joy(4) or not jxadc_s(4);           -- jump  (JXADC7)
+  joyHBCPPFRLDU(0) <= kbd_joy(0) or not stick_s(3);           -- up    (JA4)
+  joyHBCPPFRLDU(1) <= kbd_joy(1) or not stick_s(2);           -- down  (JA3)
+  joyHBCPPFRLDU(2) <= kbd_joy(2) or not stick_s(1);           -- left  (JA2)
+  joyHBCPPFRLDU(3) <= kbd_joy(3) or not stick_s(0);           -- right (JA1)
+  joyHBCPPFRLDU(4) <= kbd_joy(4) or not stick_s(4);           -- jump  (JA7)
   joyHBCPPFRLDU(5) <= kbd_joy(5) or btn_s(1);              -- start 1 (btnL)
   joyHBCPPFRLDU(6) <= kbd_joy(6) or btn_s(0);              -- start 2 (btnR)
   joyHBCPPFRLDU(7) <= kbd_joy(7) or btn_s(3) or btn_s(2);  -- coin (btnU, btnD)
@@ -240,6 +262,6 @@ begin
 
   O_PMODAMP2_AIN   <= pwm_accumulator(12);
   O_PMODAMP2_SHUTD <= not sw(15); -- sw15 up = amp shut down (audio disabled)
-  O_PMODAMP2_GAIN  <= not sw(14); -- sw14 up = gain active (GAIN active low)
+  O_PMODAMP2_GAIN  <= '1';        -- fixed 6 dB gain
 
 end struct;

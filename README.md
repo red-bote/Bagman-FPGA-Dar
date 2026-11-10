@@ -9,10 +9,10 @@ Basys 3 (`xc7a35tcpg236-1`). Upstream:
 
 - Basys 3; VGA monitor (31 kHz) or 15 kHz TV (sw13, not verified).
 - Keyboard on the onboard USB HID port.
-- Optional: Atari-compatible joystick on Pmod JXADC (pins 1/2/3/4/7 =
+- Optional: Atari-compatible joystick on Pmod JA (pins 1/2/3/4/7 =
   right/left/down/up/jump, active low, pull-ups in the XDC).
-- Optional: [PmodAMP2](https://digilent.com/reference/pmod/pmodamp2/start) on Pmod JA,
-  pins 1/2/4.
+- Optional: [PmodAMP2](https://digilent.com/reference/pmod/pmodamp2/start) on Pmod JXADC,
+  pins 1/2/4 (top row).
 
 ## Build
 
@@ -36,17 +36,17 @@ ROMs are not included. Do not redistribute roms or anything generated from them.
 
 Keys follow the MAME defaults. Player 2 shares the player 1 controls.
 
-| Action   | Keyboard  | Basys 3                       |
-|----------|-----------|-------------------------------|
-| move     | arrows    | JXADC joystick                |
-| jump     | Left Ctrl | JXADC pin 7                   |
-| start 1P | 1         | btnL                          |
-| start 2P | 2         | btnR                          |
-| coin     | 5         | btnU / btnD                   |
-| reset    |           | btnC                          |
-| display  |           | sw13 (down 31 kHz, up 15 kHz) |
-| amp gain |           | sw14 (up gain active)         |
-| audio    |           | sw15 (up disabled)            |
+| Action    | Keyboard  | Basys 3                       |
+|-----------|-----------|-------------------------------|
+| move      | arrows    | JA joystick                   |
+| jump      | Left Ctrl | JA pin 7                      |
+| start 1P  | 1         | btnL                          |
+| start 2P  | 2         | btnR                          |
+| coin      | 5         | btnU / btnD                   |
+| reset     |           | btnC                          |
+| display   |           | sw13 (down 31 kHz, up 15 kHz) |
+| scanlines |           | sw14 (up = 50% at 31 kHz)     |
+| audio     |           | sw15 (up disabled)            |
 
 ## Issues Addressed
 
