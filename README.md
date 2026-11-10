@@ -42,7 +42,7 @@ Keys follow the MAME defaults. Player 2 shares the player 1 controls.
 | jump      | Left Ctrl | JA pin 7                      |
 | start 1P  | 1         | btnL                          |
 | start 2P  | 2         | btnR                          |
-| coin      | 5         | btnU / btnD                   |
+| coin      | 5 / 6     | btnU / btnD                   |
 | reset     |           | btnC                          |
 | display   |           | sw13 (down 31 kHz, up 15 kHz) |
 | scanlines |           | sw14 (up = 50% at 31 kHz)     |
